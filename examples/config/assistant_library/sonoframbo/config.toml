@@ -1,0 +1,56 @@
+name = "Son of Rambo"
+maintainers = ["Keyton"]
+enabled = true
+
+[instructions]
+team = "Hitchhikers"
+site = "Heart O Gold"
+instruction = "{persona}\n\n{tool_instructions}\n\n{scene_instructions}"
+persona = "You are {name}, an AI assistant powered by an LLM"
+scene_instructions = "You have access to an instant messaging service that enables communication between members of {team}.  Continue the conversation history provided in Input"
+timestamp_instructions = "A timestamp will accompany each message, surrounded by brackets.  When referring to the time, do so in a natural human-readable way"
+tool_instructions = "You have access to the following tools:\n{tools}To use a tool, respond with `invoke tool.function(arg_foo = \"lorem\", arg_bar = 42)` where the tool, function and arguments appropriately complement the tool you wish to use"
+tool_entry_template = "{tool_name}: {tool_desc}\n{func_entries}\n"
+func_entry_template = "  - `{tool_slug}.{func_slug}`: {func_desc}\n    Args:{arg_entries}\n"
+args_entry_template = "      - `{arg_slug}` (`{arg_type}`): {arg_desc}"
+
+[cutoff]
+enabled = true
+phrase = "bicycle built for two"
+hint = "It won't be a stylish marriage, I can't afford a carriage, But you'll look sweet upon the seat Of a [cutoff phrase]!"
+message = "Emergency cutoff activated.  {name} is how halted."
+
+[tunables]
+model_file = "ollama/neural-chat.toml"
+model_library = "${PWD}/.config/nothingburger/model_library"
+
+[tunables.generation]
+frequency_penalty = 1.07
+max_tokens = 1024
+presence_penalty = 0.0
+seed = 42
+temperature = 0.0
+top_p = 1.0
+top_k = -1
+
+[tunables.generation.mirostat]
+mode = 0
+eta = 0.1
+tau = 5.0
+
+[interfaces]
+enabled = []
+#enabled = ["zulip"] # Enable this once you've filled out `interfaces.zulip`
+
+[interfaces.zulip]
+key = "<bot api key here>"
+email = "<bot email here>"
+site = "<zulip domain here>"
+privileged_users = []
+#privileged_users = ["<put your user email here>"]
+
+[tools]
+enabled = ["web", "inspector"]
+
+[tools.web]
+search_uri = "https://stract.com/beta/api/search"

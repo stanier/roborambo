@@ -1,0 +1,33 @@
+[project]
+name = "roborambo"
+version = "0.0.01"
+authors = [
+    { name = "Keyton Stanier" },
+]
+description = "Dead simple framework to turn LLMs into potentially useful chatbots"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["assistant", "agent", "bot", "chatbot", "rag", "vectorstore", "gpt", "nothingburger", "nothing", "burger", "llm", "chain", "text-generation"]
+license = { text = "idfk yet" }
+dependencies = [
+    'python-dotenv',
+    #'selenium',
+    'pandoc',
+    'chromadb',
+    #'psycopg2',
+    'psycopg2-binary',
+]
+
+[project.optional-dependencies]
+zulip = ['zulip']
+#msteams = ['pymsteams']
+#discord = ['discord.py']
+#mattermost = ['mattermostdriver']
+#matrix = ['mautrix']
+#rocketchat = ['rocketchat_API']
+#googlechat = ['']
+
+[project.scripts]
+rambo-serve = "roborambo.daemon:serve"
+rambo-cli = "roborambo.cli:run"
+

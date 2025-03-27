@@ -1,0 +1,8 @@
+[bots]
+enabled = ["Son of Rambo"]
+
+[daemon]
+foo = "bar"
+
+[cli]
+foo = "bar"
