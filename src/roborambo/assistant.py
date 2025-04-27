@@ -26,7 +26,8 @@ class Assistant:
     def __init__(self, conf, **kwargs):
         tools_concat = ""
 
-        self.active_tools = {}
+        if conf.get('mcp', {}).get('enabled', False):
+            self.initialize_mcp_tools()
     
         for tool in conf['tools']['enabled']:
             self.active_tools[tool] = tools.available_tools[tool]()
@@ -72,3 +73,12 @@ class Assistant:
             assistant_prefix    = conf['name'],
             cutoff              = conf['cutoff'],
         )
+
+    def initialize_mcp_tools(assistant):
+        """Initialize MCP tools in the assistant"""
+        mcp_manager = MCPManagerTool()
+        mcp_manager.discover_mcp_servers()
+        
+        # Add MCP tools to active tools
+        for tool_key, tool_instance in mcp_manager.get_loaded_tools().items():
+            assistant.active_tools[tool_key] = tool_instance

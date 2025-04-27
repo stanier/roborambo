@@ -49,6 +49,10 @@ site = "<zulip domain here>"
 privileged_users = []
 #privileged_users = ["<put your user email here>"]
 
+[mcp]
+enabled = true
+config_path = "mcp_config.json"
+
 [tools]
 enabled = ["web", "inspector"]
 

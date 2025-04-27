@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 zulip = ['zulip']
+mcp = ['websockets', 'aiohttp']
 #msteams = ['pymsteams']
 #discord = ['discord.py']
 #mattermost = ['mattermostdriver']
