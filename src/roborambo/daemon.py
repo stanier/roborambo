@@ -14,20 +14,10 @@ from multiprocessing import Process
 from nothingburger.chains import ChatChain
 from nothingburger.memory import ConversationalMemory
 from nothingburger.cli import bcolors
-#from nothingburger.model_loader import initializeModel
 
-#import nothingburger.templates as templates
-
-#import roborambo.tools as tools
-
-#from .chains import RamboChain
 from .interfaces import available_clients
-from .options import options
 from .config import Reader as ConfigReader
 from .assistant import Assistant
-#from . import DEFAULTS
-
-from pandoc.types import *
 
 class Daemon:
     def __init__(self, conf, **kwargs):
@@ -60,8 +50,6 @@ class Daemon:
 def serve(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action = 'store_true', help = 'Enable debugging mode', default = False)
-    #parser.add_argument('--nomem', action = 'store_true', help = 'Turn off persistent memory', default = options['PERSIST_MEMORY'])
-    #parser.add_argument('--supervised', action = 'store_true', help = 'Disable all self-guided capabilites', default = options['SUPERVISED'])
 
     args = parser.parse_args()
 

@@ -11,23 +11,21 @@ keywords = ["assistant", "agent", "bot", "chatbot", "rag", "vectorstore", "gpt",
 license = { text = "idfk yet" }
 dependencies = [
     'python-dotenv',
-    #'selenium',
     'pandoc',
     'chromadb',
-    #'psycopg2',
     'psycopg2-binary',
+    'tomli-w',  # For TOML writing in config TUI
+    'nothingburger',  # Core dependency
 ]
 
 [project.optional-dependencies]
 zulip = ['zulip']
-#msteams = ['pymsteams']
-#discord = ['discord.py']
-#mattermost = ['mattermostdriver']
-#matrix = ['mautrix']
-#rocketchat = ['rocketchat_API']
-#googlechat = ['']
+tui = ['rich']  # Enhanced TUI experience
+all = ['zulip', 'rich']  # All optional features
 
 [project.scripts]
 rambo-serve = "roborambo.daemon:serve"
 rambo-cli = "roborambo.cli:run"
-
+roborambo = "roborambo.cli:run"  # Main entry point
+rambo = "roborambo.cli:run"  # Shorter alias
+rambo-config = "roborambo.config_tui:main"  # Direct access to config TUI
