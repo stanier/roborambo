@@ -9,6 +9,7 @@ import nothingburger.templates as templates
 
 from . import DEFAULTS
 
+# Keep the existing templates for backwards compatibility
 templates.templates.update({
     'rambo_instruct_chat':
 """{% extends \"alpaca_instruct_input\" %}
@@ -26,8 +27,7 @@ class Assistant:
     def __init__(self, conf, **kwargs):
         tools_concat = ""
 
-        if conf.get('mcp', {}).get('enabled', False):
-            self.initialize_mcp_tools()
+        self.active_tools = {}
     
         for tool in conf['tools']['enabled']:
             self.active_tools[tool] = tools.available_tools[tool]()
@@ -45,40 +45,51 @@ class Assistant:
                     func_slug = func,
                     func_desc = self.active_tools[tool].methods[func]['description'],
                     tool_slug = tool,
-                    #arg_entries = args_concat,
                     arg_entries = "",
                 ))
             tools_concat = "{}{}".format(tools_concat, conf['instructions']['tool_entry_template'].format(
                 tool_name = self.active_tools[tool].name,
                 tool_desc = self.active_tools[tool].description,
                 func_entries = funcs_concat,
-                #func_entries = "",
             ))
 
+        # Initialize the model
+        model = initializeModel(os.path.expandvars("{}/{}".format(
+            conf.get('tunables', {}).get('model_library', DEFAULTS["MODEL_LIBRARY"]),
+            conf.get('tunables', {}).get('model_file', DEFAULTS["MODEL_FILE"]),
+        )))
+
+        # Determine API format and template style
+        api_format = conf.get('tunables', {}).get('api_format', getattr(model, 'api_format', 'completions'))
+        template_style = conf.get('tunables', {}).get('template_style', 'chat' if api_format == 'chat' else 'completion')
+        
+        # Choose appropriate template based on configuration
+        if template_style == 'chat' and api_format == 'chat':
+            # Use simple chat template for modern chat APIs
+            template = templates.getTemplate("chat_with_context")
+        elif template_style == 'chat':
+            # Use timestamped rambo template for chat-style but completion APIs
+            template = templates.getTemplate("rambo_instruct_chat_timestamped")
+        else:
+            # Legacy completion template
+            template = templates.getTemplate("rambo_instruct_chat")
+
+        # Build the instruction string
+        instruction_text = conf['instructions']['instruction'].format(**(conf['instructions']) | {
+            'scene_instructions'    : conf['instructions']['scene_instructions'].format(**conf['instructions']),
+            'timestamp_instructions': conf['instructions']['timestamp_instructions'].format(**conf['instructions']),
+            'tool_instructions'     : conf['instructions']['tool_instructions'].format(tools = tools_concat),
+            'name'                  : conf['name'],
+            'persona'               : conf['instructions']['persona'].format(name = conf['name'], **conf['instructions']),
+        })
+
         self.chain = RamboChain(
-            model               = initializeModel(os.path.expandvars("{}/{}".format(
-                conf.get('tunables', {}).get('model_library', DEFAULTS["MODEL_LIBRARY"]),
-                conf.get('tunables', {}).get('model_file', DEFAULTS["MODEL_FILE"]),
-            ))),
-            instruction         = conf['instructions']['instruction'].format(**(conf['instructions']) | {
-                'scene_instructions'    : conf['instructions']['scene_instructions'].format(**conf['instructions']),
-                'timestamp_instructions': conf['instructions']['timestamp_instructions'].format(**conf['instructions']),
-                'tool_instructions'     : conf['instructions']['tool_instructions'].format(tools = tools_concat),
-                'name'                  : conf['name'],
-                'persona'               : conf['instructions']['persona'].format(name = conf['name'], **conf['instructions']),
-            }),
-            template            = templates.getTemplate("rambo_instruct_chat"),
+            model               = model,
+            instruction         = instruction_text,
+            template            = template,
             debug               = kwargs.get('debug', False),
             stream              = False,
             assistant_prefix    = conf['name'],
             cutoff              = conf['cutoff'],
+            api_format          = api_format,
         )
-
-    def initialize_mcp_tools(assistant):
-        """Initialize MCP tools in the assistant"""
-        mcp_manager = MCPManagerTool()
-        mcp_manager.discover_mcp_servers()
-        
-        # Add MCP tools to active tools
-        for tool_key, tool_instance in mcp_manager.get_loaded_tools().items():
-            assistant.active_tools[tool_key] = tool_instance

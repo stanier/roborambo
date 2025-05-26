@@ -23,6 +23,9 @@ message = "Emergency cutoff activated.  {name} is how halted."
 [tunables]
 model_file = "ollama/neural-chat.toml"
 model_library = "${PWD}/.config/nothingburger/model_library"
+# Prefer modern chat API format when available
+api_format = "chat"  # or "completions" for legacy models
+template_style = "chat"  # "chat" for modern, "completion" for legacy formatting
 
 [tunables.generation]
 frequency_penalty = 1.07
@@ -48,10 +51,6 @@ email = "<bot email here>"
 site = "<zulip domain here>"
 privileged_users = []
 #privileged_users = ["<put your user email here>"]
-
-[mcp]
-enabled = true
-config_path = "mcp_config.json"
 
 [tools]
 enabled = ["web", "inspector"]
