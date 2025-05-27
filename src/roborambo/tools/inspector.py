@@ -1,41 +1,34 @@
 from .util import tool_name, tool_method, tool_class, method_arg
 from .tool import Tool
 
-@tool_class(name = "Tool Inspector", desc = "Allows you to gather further insight into tools.")
+@tool_class(name="Tool Inspector", desc="Allows you to gather further insight into tools.")
 class InspectorTool(Tool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    @tool_method(enabled = True)
-    @tool_method(desc = 'Get more information about a given tool, including available functions and their arguments.  (Hint: `inspector.inspect(tool_slug = "web")`)')
-    @method_arg(name = 'tool_slug', type = str, desc = 'The slug used to refer to the tool that should be described.')
+    @tool_method(enabled=True)
+    @tool_method(desc='Get more information about a given tool, including available functions and their arguments. (Hint: `inspector.inspect(tool_slug = "web")`)')
+    @method_arg(name='tool_slug', type=str, desc='The slug used to refer to the tool that should be described.')
     def inspect(self, **kwargs):
-        target_tool = active_tools[kwargs.get('tool_slug', 'inspector')]
-
-        funcs_concat = ""
-        for func in target_tool['functions']: # functions are required
-            args_concat = ""
-            for arg in target_tool['functions'][func].get('arguments', {}): # arguments are optional
-                args_concat = "{}\n{}".format(args_concat, options['ARGS_ENTRY_TEMPLATE'].format(
-                    arg_slug = arg,
-                    arg_type = target_tool['functions'][func]['arguments'][arg]['type'],
-                    arg_desc = target_tool['functions'][func]['arguments'][arg]['description'],
-                ))
-            funcs_concat = "{}{}".format(funcs_concat, options['FUNC_ENTRY_TEMPLATE'].format(
-                func_slug = func,
-                func_desc = target_tool['functions'][func]['description'],
-                tool_slug = tool,
-                arg_entries = args_concat,
-            ))
-
-        tool_string = "```\n{}```".format(options['TOOL_ENTRY_TEMPLATE'].format(
-            tool_name = target_tool['name'],
-            tool_desc = target_tool['description'],
-            func_entries = funcs_concat,
-        ))
-
-        return tool_string
-
-    @tool_method(desc = '')
-    @method_arg(name = 'tool_slug', type = str, desc = 'The slug used to refer to the tool that should be described')
-    def describe(self, **kwargs): pass
+        from . import available_tools
+        
+        tool_slug = kwargs.get('tool_slug', 'inspector')
+        if tool_slug not in available_tools:
+            return f"Tool '{tool_slug}' not found. Available tools: {', '.join(available_tools.keys())}"
+        
+        tool_class = available_tools[tool_slug]
+        tool_instance = tool_class()
+        
+        # Basic tool information
+        tool_info = f"**{tool_class.__name__}**\n"
+        tool_info += f"Description: {getattr(tool_class, '__doc__', 'No description available')}\n\n"
+        
+        # List methods
+        tool_info += "Available methods:\n"
+        for method_name in dir(tool_instance):
+            if not method_name.startswith('_') and callable(getattr(tool_instance, method_name)):
+                method = getattr(tool_instance, method_name)
+                if hasattr(method, '__config__'):
+                    tool_info += f"  - {method_name}: {method.__config__.get('method_desc', 'No description')}\n"
+        
+        return tool_info

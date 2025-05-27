@@ -1,20 +1,36 @@
 from inspect import getmembers, ismethod
+from .util import tool_class
 
-from .util import tool_name, tool_method, tool_class, method_arg
-from ..types import Configable
-
-@tool_class(name = "Base Tool", desc = "Unconfigured base tool")
-class Tool(Configable):
+@tool_class(name="Base Tool", desc="Unconfigured base tool")
+class Tool:
     emoji = None
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        for i in getmembers(self, predicate=ismethod):
-            if '__config__' in dir(i[1]) and i[1].__config__.get('method_enabled', False) == True:
-                method = {
+        if not hasattr(self, '__config__'):
+            self.__config__ = {'tool_methods': {}}
+        
+        # Initialize methods from decorated functions
+        for name, method in getmembers(self, predicate=ismethod):
+            if hasattr(method, '__config__') and method.__config__.get('method_enabled', False):
+                method_config = {
                     'arguments': {},
-                    'method': i[1],
+                    'method': method,
                 }
-                for j in i[1].__config__['arguments']:
-                    method['arguments'][j] = i[1].__config__['arguments'][j]
-                self.__config__["tool_methods"][i[0]] = method
+                for arg in method.__config__.get('arguments', {}):
+                    method_config['arguments'][arg] = method.__config__['arguments'][arg]
+                self.__config__["tool_methods"][name] = method_config
+
+    @property
+    def methods(self):
+        """Return configured methods for this tool."""
+        return getattr(self, '__config__', {}).get('tool_methods', {})
+
+    @property 
+    def name(self):
+        """Return tool name from configuration."""
+        return getattr(self, '__config__', {}).get('tool_name', self.__class__.__name__)
+
+    @property
+    def description(self):
+        """Return tool description from configuration.""" 
+        return getattr(self, '__config__', {}).get('tool_desc', 'No description available')

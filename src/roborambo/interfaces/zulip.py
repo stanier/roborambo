@@ -1,6 +1,5 @@
 import sys
 import re
-
 from zulip import Client as ZulipClient
 from .messaging import MessagingInterface
 
@@ -11,126 +10,56 @@ class ZulipInterface(MessagingInterface):
 
     def __init__(self, chain, **kwargs):
         super().__init__(chain, **kwargs)
-        self.emoji["look"]      = "eyes"
-        self.emoji["read"]      = "book"
-        self.emoji["write"]     = "pencil"
-        self.emoji["work"]      = "working on it"
-        self.emoji["ask"]       = "umm"
-        self.emoji["point"]     = "point up"
-        self.emoji["plan"]      = "thought"
-        self.emoji["yes"]       = "+1"
-        self.emoji["no"]        = "-1"
-        self.emoji["maybe"]     = "palm hand down"
-        self.emoji["octo"]      = "octopus"
-        self.emoji["success"]   = "check"
-        self.emoji["failure"]   = "cross mark"
-        self.emoji["tool"]      = "toolbox"
-        self.emoji["web"]       = "globe"
-        self.emoji["search"]    = "search"
-        self.emoji["noaccess"]  = "prohibited"
+        self.emoji = {
+            "look": "eyes", "write": "pencil", "success": "check", 
+            "failure": "cross mark", "noaccess": "prohibited"
+        }
 
         self.client = ZulipClient(
-            api_key = kwargs['key'],
-            email = kwargs['email'],
-            site = kwargs['site'],
+            api_key=kwargs['key'],
+            email=kwargs['email'],
+            site=kwargs['site'],
         )
 
         self.privileged_users = kwargs.get("privileged_users", [])
-
         self.chain = chain
         self.profile = self.client.get_profile()
-
         self.tunables = kwargs['tunables']
     
     def serve(self, **kwargs):
-        _ = super().serve(**kwargs);
-        if (_ is not None): return _
         self.client.call_on_each_message(self.handle_message)
 
     def start_callback(self, message, **kwargs):
-        _ = super().start_callback(message, **kwargs);
-        if (_ is not None): return _
         self.add_reaction(message['id'], 'look')
 
-    def tool_callback(self, message, invocation, **kwargs):
-        _ = super().tool_callback(message, **kwargs);
-        if (_ is not None): return _
-        if active_tools[invocation['tool']].emoji:
-            self.add_reaction(message['id'], active_tools[invocation['tool']].emoji)
-        if active_tools[invocation['tool']].methods[invocation['func']].get('emoji', False):
-            self.add_reaction(message['id'], active_tools[invocation['tool']].methods[invocation['func']]['emoji'])
-
     def finish_callback(self, message, **kwargs):
-        _ = super().finish_callback(message, **kwargs);
-        if (_ is not None): return _
         self.remove_reaction(message['id'], 'look')
         self.remove_reaction(message['id'], 'write')
 
     def write_callback(self, message, **kwargs):
-        _ = super().write_callback(message, **kwargs);
-        if (_ is not None): return _
         self.add_reaction(message['id'], 'write')
 
     def cutoff_callback(self, message, **kwargs):
-        _ = super().cutoff_callback(message, **kwargs);
-        if (_ is not None): return _
         if message['type'] == 'private':
-            recips = []
-            for r in message['display_recipient']: recips.append(r['id'])
+            recips = [r['id'] for r in message['display_recipient']]
             msg_type = "private"
             msg_to = recips
         else:
-            msg_type = "stream",
+            msg_type = "stream"
             msg_to = message['stream_id']
         
-        self.client.send_message({"type": msg_type, "to": msg_to, "content": CUTOFF_MESSAGE})
+        self.client.send_message({"type": msg_type, "to": msg_to, "content": "Emergency cutoff activated."})
         sys.exit()
 
-    def success_callback(self, message, **kwargs):
-        if super().success_callback(message, **kwargs): return
-
-    def failure_callback(self, message, **kwargs):
-        _ = super().failure_callback(message, **kwargs);
-        if (_ is not None): return _
-
-    def warning_callback(self, message, **kwargs):
-        _ = super().warning_callback(message, **kwargs);
-        if (_ is not None): return _
-
-    def info_callback(self, message, **kwargs):
-        _ = super().info_callback(message, **kwargs);
-        if (_ is not None): return _
-
-    def intervention_callback(self, message, **kwargs):
-        _ = super().intervention_callback(message, **kwargs);
-        if (_ is not None): return _
-
-    def reply_message(self, message, data, **kwargs):
-        _ = super().reply_message(message, **kwargs);
-        if (_ is not None): return _
-
-    def send_message(self, destination, data, **kwargs):
-        _ = super().send_message(message, **kwargs);
-        if (_ is not None): return _
-
     def add_reaction(self, mid, emoji, **kwargs):
-        _ = super().add_reaction(mid, emoji, **kwargs);
-        if (_ is not None): return _
         self.client.add_reaction({"message_id": mid, "emoji_name": self.emoji[emoji]})
+    
     def remove_reaction(self, mid, emoji, **kwargs):
-        _ = super().remove_reaction(mid, emoji, **kwargs);
-        if (_ is not None): return _
         self.client.remove_reaction({"message_id": mid, "emoji_name": self.emoji[emoji]})
 
     def get_room_info(self, message, **kwargs):
-        _ = super().get_room_info(message, **kwargs);
-        if (_ is not None): return _
+        info = {'ri': [], 'rs': [], 'recips': []}
         
-        info = {
-            'ri': [],
-            'rs': [],
-            'recips': [],
-        }
         for recip in message['display_recipient']:
             info['ri'].append(int(recip['id']))
             info['rs'].append(str(recip['id']))
@@ -143,13 +72,9 @@ class ZulipInterface(MessagingInterface):
 
         if message['type'] == 'private':
             info['visibility'] = 'private'
-            if len(info['recips']) > 2:
-                info['privacy'] = 'private_group'
-            else:
-                info['privacy'] = 'private_direct'
-
+            info['privacy'] = 'private_group' if len(info['recips']) > 2 else 'private_direct'
             info['channel'] = ','.join(info['rs'])
-            info['to'] = info['ri'] # Don't think we can use channel because Zulip API expects array?  I think?  I should double check
+            info['to'] = info['ri']
         else:
             info['visibility'] = 'semipublic'
             info['privacy'] = 'semipublic'
@@ -159,12 +84,14 @@ class ZulipInterface(MessagingInterface):
         return info
 
     def handle_message(self, message, **kwargs):
-        if message['sender_id'] == self.profile['user_id']: return # Don't talk to yourself
+        if message['sender_id'] == self.profile['user_id']:
+            return
 
         kwargs.update(self.get_room_info(message, **kwargs))
 
-        _ = super().handle_message(message, **kwargs);
-        if (_ is not None): return _
+        # Handle special commands
+        if super().handle_message(message, **kwargs):
+            return
 
         msg = {
             'id': message['id'],
@@ -185,20 +112,20 @@ class ZulipInterface(MessagingInterface):
 
         response = self.chain.run(
             msg,
-            callbacks = {
-                'start'         : self.start_callback,
-                'finish'        : self.finish_callback,
-                'write'         : self.write_callback,
-                'cutoff'        : self.cutoff_callback,
-                'success'       : self.success_callback,
-                'failure'       : self.failure_callback,
-                'warning'       : self.warning_callback,
-                'info'          : self.info_callback,
-                'intervention'  : self.intervention_callback,
-                'tool'          : self.tool_callback,
+            callbacks={
+                'start': self.start_callback,
+                'finish': self.finish_callback,
+                'write': self.write_callback,
+                'cutoff': self.cutoff_callback,
+                'tool': lambda m, i: None,
+                'success': lambda m: None,
+                'failure': lambda m: None,
+                'warning': lambda m: None,
+                'info': lambda m: None,
+                'intervention': lambda m: None,
             },
-            assistant_prefix = self.profile['full_name'],
-            stop = ["\n[", "</s>"],
+            assistant_prefix=self.profile['full_name'],
+            stop=["\n[", "</s>"],
             **self.tunables,
         )
         

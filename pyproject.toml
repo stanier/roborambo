@@ -1,31 +1,38 @@
 [project]
 name = "roborambo"
-version = "0.0.01"
+version = "0.0.2"
 authors = [
     { name = "Keyton Stanier" },
 ]
-description = "Dead simple framework to turn LLMs into potentially useful chatbots"
+description = "Dead simple framework to turn LLMs into chatbots"
 readme = "README.md"
 requires-python = ">=3.9"
-keywords = ["assistant", "agent", "bot", "chatbot", "rag", "vectorstore", "gpt", "nothingburger", "nothing", "burger", "llm", "chain", "text-generation"]
-license = { text = "idfk yet" }
+keywords = ["assistant", "bot", "chatbot", "llm", "minimalist"]
+license = { text = "MIT" }
 dependencies = [
-    'python-dotenv',
-    'pandoc',
-    'chromadb',
-    'psycopg2-binary',
-    'tomli-w',  # For TOML writing in config TUI
-    'nothingburger',  # Core dependency
+    'nothingburger',    # Core LLM framework
+    'requests',         # For web tool HTTP requests
 ]
 
 [project.optional-dependencies]
+# Messaging interfaces (install only what you need)
 zulip = ['zulip']
-tui = ['rich']  # Enhanced TUI experience
-all = ['zulip', 'rich']  # All optional features
+
+# Tools (install only what you need) 
+web = ['pandoc']    # For web tool text extraction
+
+# Complete installations
+all = ['zulip', 'pandoc']
+interfaces = ['zulip'] 
+tools = ['pandoc']
 
 [project.scripts]
+roborambo = "roborambo.cli:run"
+rambo = "roborambo.cli:run"
 rambo-serve = "roborambo.daemon:serve"
 rambo-cli = "roborambo.cli:run"
-roborambo = "roborambo.cli:run"  # Main entry point
-rambo = "roborambo.cli:run"  # Shorter alias
-rambo-config = "roborambo.config_tui:main"  # Direct access to config TUI
+rambo-config = "roborambo.config_tui:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
