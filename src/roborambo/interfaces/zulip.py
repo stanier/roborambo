@@ -26,6 +26,16 @@ class ZulipInterface(MessagingInterface):
         self.profile = self.client.get_profile()
         self.tunables = kwargs['tunables']
     
+    def convert_think_blocks_to_spoilers(self, text):
+        """Convert <think></think> blocks to Zulip spoilers."""
+        def replace_think_block(match):
+            content = match.group(1).strip()
+            return f"```spoiler Thinking\n{content}\n```"
+        
+        # Use re.DOTALL to match across newlines, re.IGNORECASE for case insensitivity
+        pattern = r'<think>(.*?)</think>'
+        return re.sub(pattern, replace_think_block, text, flags=re.DOTALL | re.IGNORECASE)
+    
     def serve(self, **kwargs):
         self.client.call_on_each_message(self.handle_message)
 
@@ -128,5 +138,8 @@ class ZulipInterface(MessagingInterface):
             stop=["\n[", "</s>"],
             **self.tunables,
         )
+        
+        # Convert think blocks to spoilers for Zulip
+        response = self.convert_think_blocks_to_spoilers(response)
         
         self.client.send_message({"type": message['type'], "to": kwargs['to'], "content": response})
