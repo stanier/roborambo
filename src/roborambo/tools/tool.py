@@ -11,14 +11,21 @@ class Tool:
         
         # Initialize methods from decorated functions
         for name, method in getmembers(self, predicate=ismethod):
-            if hasattr(method, '__config__') and method.__config__.get('method_enabled', False):
-                method_config = {
-                    'arguments': {},
-                    'method': method,
-                }
-                for arg in method.__config__.get('arguments', {}):
-                    method_config['arguments'][arg] = method.__config__['arguments'][arg]
-                self.__config__["tool_methods"][name] = method_config
+            if hasattr(method, '__config__'):
+                # Check if method is enabled (default to True if not specified)
+                method_enabled = method.__config__.get('method_enabled', True)
+                if method_enabled:
+                    method_config = {
+                        'arguments': {},
+                        'method': method,
+                        # Copy method description from decorator
+                        'description': method.__config__.get('method_desc', 'No description'),
+                        'method_desc': method.__config__.get('method_desc', 'No description'),  # Keep both for compatibility
+                    }
+                    # Copy argument configurations
+                    for arg in method.__config__.get('arguments', {}):
+                        method_config['arguments'][arg] = method.__config__['arguments'][arg]
+                    self.__config__["tool_methods"][name] = method_config
 
     @property
     def methods(self):

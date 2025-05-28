@@ -6,9 +6,8 @@ class InspectorTool(Tool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    @tool_method(enabled=True)
-    @tool_method(desc='Get more information about a given tool, including available functions and their arguments. (Hint: `inspector.inspect(tool_slug = "web")`)')
-    @method_arg(name='tool_slug', type=str, desc='The slug used to refer to the tool that should be described.')
+    @tool_method(desc='Get more information about a given tool, including available functions and their arguments. (Hint: `inspector.inspect(tool_slug = "web")`)', enabled=True)
+    @method_arg(name='tool_slug', type='str', desc='The slug used to refer to the tool that should be described.')
     def inspect(self, **kwargs):
         from . import available_tools
         

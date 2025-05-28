@@ -13,7 +13,7 @@ class WebTool(Tool):
         super().__init__(**kwargs)
 
     @tool_method(desc='Search the web', enabled=True)
-    @method_arg(name='query', type=str, desc='Query to pass to the web search engine')
+    @method_arg(name='query', type='str', desc='Query to pass to the web search engine')
     def search(self, query, **kwargs):
         data = json.dumps({"query": query})
         response = requests.post(self.search_endpoint, headers=self.headers, data=data).json()
@@ -27,8 +27,8 @@ class WebTool(Tool):
         
         return results
 
-    @tool_method(desc='Read the text content of a webpage')
-    @method_arg(name='site_uri', type=str, desc='URL of the webpage that should be rendered')
+    @tool_method(desc='Read the text content of a webpage', enabled=True)
+    @method_arg(name='site_uri', type='str', desc='URL of the webpage that should be rendered')
     def read(self, site_uri, **kwargs):
         response = requests.get(site_uri, headers=self.headers)
         doc = pandoc.read(response.text, format="html")
